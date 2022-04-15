@@ -24,6 +24,18 @@ app.listen(3000, () => {
 
 // ROUTES
 
+app.post("/createshifts", async (req, res) => {
+    const { email, start_time, end_time, shift_type } = req.body;
+
+    try {
+        const newShift = await client.query("INSERT INTO shifts(user_email, start_at, end_at, shift_type) VALUES ($1, $2, $3, $4);", [email, start_time, end_time, shift_type])
+        res.status(201).send("Shift created!")
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+})
+
 app.post("/register", async (req, res) => {
 
     const { email, password } = req.body;
