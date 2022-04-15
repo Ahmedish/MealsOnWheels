@@ -3,6 +3,7 @@ const { Client } = require('pg');
 const express = require('express');
 const app = express();
 const jwtGenerator = require("./jwtGenerator");
+const authorize = require("./authorize");
 
 //SETUP STUFF
 
@@ -62,6 +63,10 @@ app.post("/login", async (req, res) => {
             return res.status(401).send("User does not exist!")
         }
 
+        if (password !== user.rows[0].user_password) {
+            return res.status(401).json("Invalid Credential");
+        }
+
         const jwtToken = jwtGenerator(user.rows[0].user_id);
         return res.json({ jwtToken });
     }
@@ -71,44 +76,30 @@ app.post("/login", async (req, res) => {
     }
 })
 
-app.get("/", (req, res) => {
-})
+app.post("/verify", authorize, (req, res) => {
+    try {
+        res.json(true);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+});
 
-app.get("/calendar", (req, res) => {
-    // check if user is admin
-    res.send("admin.Calendar");
+app.post("/", authorize, async (req, res) => {
+    try {
+        const user = await pool.query(
+            "SELECT user_name FROM users WHERE user_id = $1",
+            [req.user.id]
+        );
 
-    //volunteer calendar view
-    //volunteer day with times view
-
-    //admin calendar page
-
-})
-
-//admin volunteer roster
-
-app.get("/roster", (req, res) => {
-
-})
-
-//admin check in page
+        res.json(user.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+});
 
 
 
 
-app.get("/allshifts/:id", (req, res) => {
-    //use id to query database to find upcoming shifts
-    //pass upcoming shifts to ejs file
-    //ejs file displays shifts
-
-    //check if user is admin or volunteer and adjust view accordingly
-
-    //admin all shifts
-    //admin add shifts
-    //admin edit shifts
-
-    //volunteer all shifts
-    //volunteer your shifts
-    //volunteer day with editing shift
-})
 
